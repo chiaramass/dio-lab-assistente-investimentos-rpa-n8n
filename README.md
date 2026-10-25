@@ -124,17 +124,17 @@ Conecte o Agente de IA do N8N a um modelo como Gemini ou GPT para:
 
 ### MVP (Mínimo Viável)
 
-- [ ] Repositório forkado com o workflow N8N implementado
-- [ ] Workflow N8N exportado (`n8n/workflow.json`) com mensagens estáticas
-- [ ] Script de RPA integrado ao Webhook do N8N
-- [ ] Print ou vídeo demonstrando o fluxo funcionando de ponta a ponta
+- [x ] Repositório forkado com o workflow N8N implementado
+- [ x] Workflow N8N exportado (`n8n/workflow.json`) com mensagens estáticas
+- [ x] Script de RPA integrado ao Webhook do N8N
+- [ x] Print ou vídeo demonstrando o fluxo funcionando de ponta a ponta
 
 ### Desafio Completo
 
-- [ ] Todos os itens do MVP
-- [ ] Integração com Agente de IA no N8N
-- [ ] Mensagens geradas dinamicamente via LLM
-- [ ] Documentação explicando as decisões técnicas
+- [ x] Todos os itens do MVP
+- [ x] Integração com Agente de IA no N8N
+- [ x] Mensagens geradas dinamicamente via LLM
+- [ x] Documentação explicando as decisões técnicas
 
 ## Estrutura do Repositório
 
@@ -150,23 +150,3 @@ Conecte o Agente de IA do N8N a um modelo como Gemini ou GPT para:
     └── 📄 data.csv                 # ✅ Opções de investimento (já implementado)
 ```
 
-## Prompts Úteis para Copilotos de IA
-
-| Tarefa | Sugestão de Prompt |
-|--------|-------------------|
-| Gerar dados fictícios | "Crie 10 clientes fictícios com nome, email, saldo e perfil de investidor em JSON" |
-| Entender código | "Explique o que faz a biblioteca BeautifulSoup em Python" |
-| Debugar erros | "Meu script Python está dando erro X, o que pode ser?" |
-| Montar workflow | "Como configuro um webhook no N8N para receber dados JSON?" |
-
-## Referências
-
-- [Documentação do N8N](https://docs.n8n.io/)
-- [BeautifulSoup: Web Scraping com Python](https://realpython.com/beautiful-soup-web-scraper-python/)
-- [GitHub Pages: Guia Rápido](https://pages.github.com/)
-
----
-
-**Bons estudos e mãos à obra** 🚀
-
-Se tiver dúvidas, lembre-se: a melhor forma de aprender é experimentando. Erre, corrija e celebre cada pequena vitória no caminho.
