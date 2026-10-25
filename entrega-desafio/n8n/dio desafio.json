@@ -1,0 +1,325 @@
+{
+  "name": "dio desafio",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f191da3c-b45c-40ff-8849-bae0eb88b4fb",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        -176
+      ],
+      "webhookId": "102728cc-e2d0-498b-aa0a-47255e99802e"
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/chiaramass/dio-lab-assistente-investimentos-rpa-n8n/main/docs/data.csv",
+        "options": {}
+      },
+      "id": "ab5f9067-76f8-4492-92f6-6974bcf93451",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        48,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const csv = String($input.first().json.data || '');\nconst lines = csv.split(/\\r?\\n/).filter(l => l.trim());\nconst header = lines.shift().split(',').map(h => h.trim());\nconst norm = s => String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase();\nconst produtos = lines.map(l => {\n  const c = l.split(',');\n  const o = {};\n  header.forEach((h, i) => { o[h] = (c[i] || '').trim(); });\n  return o;\n});\nconst body = $('Webhook').first().json.body;\nconst clientes = Array.isArray(body) ? body : (body && Array.isArray(body.clientes) ? body.clientes : [body]);\nreturn clientes.map(cli => {\n  const nome = (cli && cli.nome) || 'cliente';\n  const perfil = (cli && cli.perfil) || '';\nconst saldoBruto = cli ? cli.saldo : null;\n  let saldo = null;\n  if (typeof saldoBruto === 'number') {\n    saldo = saldoBruto;\n  } else if (saldoBruto !== undefined && saldoBruto !== null && saldoBruto !== '') {\n    const n = parseFloat(String(saldoBruto).replace(/[^0-9,.-]/g, '').split('.').join('').replace(',', '.'));\n    saldo = isNaN(n) ? null : n;\n  }\n  const opcoes = produtos.filter(p => norm(p.perfil) === norm(perfil));\n  let mensagem;\n  if (opcoes.length === 0) {\n    mensagem = 'Ola, ' + nome + '! Nao encontramos opcoes de investimento para o perfil informado.';\n  } else {\n    mensagem = 'Ola, ' + nome + '! Com base no seu perfil ' + perfil + ', recomendamos: ' + opcoes.map(p => p.produto + ' (minimo R$ ' + p.minimo + ', rentabilidade ' + p.rentabilidade + ')').join('; ') + '.';\n  }\n  return { json: { nome: nome, perfil: perfil, saldo: saldo, recomendacoes: opcoes, mensagem: mensagem } };\n});"
+      },
+      "id": "ead217d4-cbad-4c67-8747-0bab25705866",
+      "name": "Gerar Recomendacao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "id": "950ecb35-76bd-46ea-be91-2ff75cbf5d4b",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        336,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# Loop over input items and add a new field called 'my_new_field' to the JSON of each one\nfor item in _items:\n  item[\"json\"][\"my_new_field\"] = 1\nreturn _items"
+      },
+      "id": "aca3c7eb-98b3-491d-ad10-2e0701abb229",
+      "name": "Code in Python",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Cliente: {{ $json.nome }}\nPerfil de investidor: {{ $json.perfil }}\nSaldo disponivel (R$): {{ $json.saldo ?? \"nao informado\" }}\nProdutos adequados ao perfil (do CSV): {{ JSON.stringify($json.recomendacoes) }}\n\nEscreva a mensagem de recomendacao para este cliente.",
+        "options": {
+          "systemMessage": "Voce e um assessor de investimentos simpatico e claro. Escreva em portugues do Brasil uma mensagem curta (ate 4 frases), unica e personalizada para o cliente, chamando-o pelo nome. Use apenas os produtos fornecidos, considere o saldo do cliente em relacao ao valor minimo de cada produto e destaque as opcoes mais adequadas. Nao invente produtos, taxas ou valores. Se o saldo for menor que o minimo de um produto, nao o recomende como compra imediata. Responda somente com a mensagem."
+        }
+      },
+      "id": "fc12e337-b23b-473e-92fb-3fa12c50df22",
+      "name": "Agente de Investimentos",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.8-flash",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "2117e011-c132-4106-b039-1042535b6db5",
+      "name": "Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        912,
+        256
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "nome",
+              "value": "={{ $('Code in Python').item.json.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "perfil",
+              "value": "={{ $('Code in Python').item.json.perfil }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "saldo",
+              "value": "={{ $('Code in Python').item.json.saldo }}",
+              "type": "number"
+            },
+            {
+              "id": "a4",
+              "name": "mensagem",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "id": "85d1e1a3-c955-41db-af5d-026e9f5210a7",
+      "name": "Montar Resposta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "fef6d50d-1a4a-4d87-8da2-02d13d1ccf57",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1472,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code in Python').item.json.body[0].email }}",
+        "subject": "={{ $('Code in Python').item.json.perfil }}",
+        "message": "={{ $('Code in Python').item.json.mensagem }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        48
+      ],
+      "id": "fd16c0d8-288c-46f1-83e1-e690b8136157",
+      "name": "Send a message",
+      "webhookId": "f5c02b55-3177-4669-95b3-51aa64355508"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Gerar Recomendacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Recomendacao": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python": {
+      "main": [
+        [
+          {
+            "node": "Agente de Investimentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de Investimentos": {
+      "main": [
+        [
+          {
+            "node": "Montar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de Investimentos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3c00076a-e809-45eb-9cce-4dd6b0327671",
+  "meta": {
+    "instanceId": "5267224bcd2f4864a02707e5d2628982134bf1e90d0c01a123213b311164f66f"
+  },
+  "nodeGroups": [
+    {
+      "id": "9411c4bb-2b33-43f0-b312-ab9c0317c091",
+      "name": "Cruzar perfil com produtos",
+      "nodeIds": [
+        "ab5f9067-76f8-4492-92f6-6974bcf93451",
+        "ead217d4-cbad-4c67-8747-0bab25705866"
+      ],
+      "description": "Recebe o cliente do webhook, lê o CSV de investimentos e separa as opções adequadas ao perfil dele"
+    }
+  ],
+  "id": "IMKSB6TuwlcUThyP",
+  "tags": []
+}
