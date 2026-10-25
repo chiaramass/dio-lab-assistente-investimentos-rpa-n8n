@@ -134,7 +134,7 @@ Conecte o Agente de IA do N8N a um modelo como Gemini ou GPT para:
 - [ x] Todos os itens do MVP
 - [ x] Integração com Agente de IA no N8N
 - [ x] Mensagens geradas dinamicamente via LLM
-- [ x] Documentação explicando as decisões técnicas
+- [ ] Documentação explicando as decisões técnicas
 
 ## Estrutura do Repositório
 
